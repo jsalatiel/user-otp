@@ -259,6 +259,7 @@ class OC_USER_OTP extends OC_User_Backend{
                         && OCP\Config::getAppValue('user_otp','disableOtpOnRemoteScript',true)
                 )
                 {
+			//OC_Log::write('OC_USER_OTP','Skipping OTP for '.$uid.' for remoteclient from ip '.$_SERVER['REMOTE_ADDR'], OC_Log::WARN);
                         return $userBackend->checkPassword($uid, $password);
                 }
 
@@ -273,14 +274,14 @@ class OC_USER_OTP extends OC_User_Backend{
                 if ($single_host!=null && isset($_SERVER['REMOTE_ADDR'])) {
                         OC_Log::write('OC_USER_OTP','Checking \''.$_SERVER['REMOTE_ADDR'].'\' against \''.$single_host.'\'', OC_Log::DEBUG);
                         if (gethostbyname($single_host) ===  $_SERVER['REMOTE_ADDR'] ) {
-                                OC_Log::write('OC_USER_OTP','Skipping OTP for '.$uid.' from \''.$single_host.'\' ('.$_SERVER['REMOTE_ADDR'].')', OC_Log::INFO);
+                                OC_Log::write('OC_USER_OTP','Skipping OTP for '.$uid.' from \''.$single_host.'\' ('.$_SERVER['REMOTE_ADDR'].')', OC_Log::WARN);
                                 return $userBackend->checkPassword($uid, $password);
                         }
                 }
         }
 
         if(!$this->mOtp->CheckUserExists($uid)){
-            OC_Log::write('OC_USER_OTP','No OTP for user '.$uid.' use user backend', OC_Log::DEBUG);
+            OC_Log::write('OC_USER_OTP','No OTP for user '.$uid.' use user backend', OC_Log::WARN);
             return $userBackend->checkPassword($uid, $password);
         }else{
             $this->mOtp->SetUser($uid);
@@ -299,6 +300,7 @@ class OC_USER_OTP extends OC_User_Backend{
                 case _AUTH_OTP_ONLY_:
                     $result = $this->mOtp->CheckToken($password);
                     if ($result===0){
+	                OC_Log::write('OC_USER_OTP', $uid ." successfully logged in from ".$_SERVER['REMOTE_ADDR']." using OTP", OC_Log::WARN);
                         return $uid;
                     }else{
                         if(isset($this->mOtp->_errors_text[$result])){
